@@ -97,11 +97,12 @@ void usiserial_send_byte(uint8_t data)
 #endif
  
     // Configure Timer0
+    GTCCR = (1<<TSM)|(1<<PSR0);				// Put Timer0 in sync mode
     TCCR0A = 2<<WGM00;                      // CTC mode
     TCCR0B = CLOCKSELECT;                   // Set prescaler to clk or clk /8
-    GTCCR |= 1 << PSR0;                     // Reset prescaler
     OCR0A = FULL_BIT_TICKS;                 // Trigger every full bit width
     TCNT0 = 0;                              // Count up from 0 
+    GTCCR = 0;								// Disable sync mode
 
     // Configure USI to send high start bit and 7 bits of data
     USIDR = 0x00 |                            // Start bit (low)
@@ -147,6 +148,18 @@ ISR (USI_OVF_vect) {
 void setup() {
     pinMode(1,HIGH);                // Configure USI_DO as output.
     digitalWrite(1,HIGH);           // Ensure serial output is high when idle
+
+    // Pull all unused pins down to ground
+    pinMode(0,OUTPUT);
+    pinMode(2,OUTPUT);
+    pinMode(3,OUTPUT);
+    pinMode(4,OUTPUT);
+    pinMode(5,OUTPUT);
+    digitalWrite(0,LOW);
+    digitalWrite(2,LOW);
+    digitalWrite(3,LOW);
+    digitalWrite(4,LOW);
+    digitalWrite(5,LOW);
 }
 
 void loop() {
