@@ -4,19 +4,24 @@
  *
  * Created: 7/1/2016 2:09:31 PM
  *  Author: Mark
+ *  Modified: mgrotaers
+ *
+ *  UNTESTED.  Just combine code together.
  */ 
 
-#include "usiserialsend.h"
 #include <avr/io.h>
-#include <util/delay.h>
-#include <avr/iotnx5.h>
 #include <avr/interrupt.h>
+#include <util/delay.h>
+
+//#include <avr/iotnx5.h>
+#include <stdint-gcc.h>
+
+//F_CPU defined by Arduino, e.g. 1000000, 8000000, 16000000
+#define F_CPU 8000000
 
 // Set your baud rate and here
 #define BAUDRATE            9600
 #define STOPBITS            1
-//F_CPU defined by Arduino, e.g. 1000000, 8000000, 16000000
-#define F_CPU 8000000
 
 // If bit width in cpu cycles is greater than 255 then  divide by 8 to fit in timer
 // Calculate prescaler setting
@@ -108,4 +113,37 @@ ISR (USI_OVF_vect) {
         USISR |= 1<<USIOIF;             // clear interrupt flag
         usiserial_send_set_state(AVAILABLE);
     }
+}
+
+void setup()
+{
+    PORTB |= 1 << PB1;              // Ensure serial output is high
+    DDRB  |= (1<<PB1);              // Configure USI_DO as output.
+    USICR = 0;                      // Start with USI disabled.
+    sei();                          // Enable global interrupts
+}
+
+void helloWorld()
+{
+    char message[] = "Hello World!\r\n";
+    uint8_t len = sizeof(message)-1;
+    while (1)
+    {
+        for (uint8_t i = 0; i<len; i++)
+        {
+            while (!usiserial_send_available())
+            {
+                // Wait for last send to complete
+            }
+            usiserial_send_byte(message[i]);
+        }
+        _delay_ms(1000);
+    }
+}
+
+int main(void)
+{
+    setup();
+    
+    helloWorld();
 }
